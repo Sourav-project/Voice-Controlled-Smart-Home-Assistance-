@@ -110,7 +110,7 @@ export default function Hero() {
     <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        {Array.from({ length: 20 }).map((_, i) => (
+        {Array.from({ length: 8 }).map((_, i) => (
           <motion.div
             key={i}
             className="absolute rounded-full bg-blue-500/10"
@@ -136,7 +136,7 @@ export default function Hero() {
         ))}
       </div>
 
-      <div className="z-10 text-center px-8 py-12 max-w-4xl rounded-2xl backdrop-blur-md bg-gradient-to-br from-white/5 to-blue-500/10 border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] relative overflow-hidden">
+      <div className="z-10 text-center px-8 py-12 max-w-4xl rounded-2xl bg-white/20 border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] relative overflow-hidden">
         {/* Device compatibility indicator */}
         <div className="absolute top-4 right-4 flex gap-2">
           {capabilities?.isMobile && (
@@ -213,7 +213,7 @@ export default function Hero() {
           {/* Siri-like colorful background effect */}
           {isListening && (
             <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70 blur-md"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70"
               animate={{
                 scale: [1, 1.2, 1],
                 rotate: [0, 180],
