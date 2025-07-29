@@ -53,7 +53,7 @@ export default function DemoSection() {
   ]
 
   return (
-    <section ref={ref} className="py-20 bg-gradient-to-b from-slate-800 to-slate-900 text-white">
+    <section ref={ref} id="demo" className="py-20 bg-gradient-to-b from-slate-800 to-slate-900 text-white">
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center mb-16"

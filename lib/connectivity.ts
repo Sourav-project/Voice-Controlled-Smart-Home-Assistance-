@@ -241,40 +241,59 @@ export class VoiceCommandProcessor {
   async processCommand(command: string) {
     const normalizedCommand = command.toLowerCase().trim()
     console.log("Processing command:", normalizedCommand)
+    const startTime = performance.now() // Start timing
 
     try {
       // Light commands
       if (this.isLightCommand(normalizedCommand)) {
-        return await this.handleLightCommand(normalizedCommand)
+        const result = await this.handleLightCommand(normalizedCommand)
+        const endTime = performance.now()
+        console.log(`Command "${normalizedCommand}" processed in ${endTime - startTime} ms`)
+        return result
       }
 
       // Temperature commands
       if (this.isTemperatureCommand(normalizedCommand)) {
-        return await this.handleThermostatCommand(normalizedCommand)
+        const result = await this.handleThermostatCommand(normalizedCommand)
+        const endTime = performance.now()
+        console.log(`Command "${normalizedCommand}" processed in ${endTime - startTime} ms`)
+        return result
       }
 
       // Lock commands
       if (this.isLockCommand(normalizedCommand)) {
-        return await this.handleLockCommand(normalizedCommand)
+        const result = await this.handleLockCommand(normalizedCommand)
+        const endTime = performance.now()
+        console.log(`Command "${normalizedCommand}" processed in ${endTime - startTime} ms`)
+        return result
       }
 
       // Music commands
       if (this.isMusicCommand(normalizedCommand)) {
-        return await this.handleMusicCommand(normalizedCommand)
+        const result = await this.handleMusicCommand(normalizedCommand)
+        const endTime = performance.now()
+        console.log(`Command "${normalizedCommand}" processed in ${endTime - startTime} ms`)
+        return result
       }
 
       // Routine commands
       if (this.isRoutineCommand(normalizedCommand)) {
-        return await this.handleRoutineCommand(normalizedCommand)
+        const result = await this.handleRoutineCommand(normalizedCommand)
+        const endTime = performance.now()
+        console.log(`Command "${normalizedCommand}" processed in ${endTime - startTime} ms`)
+        return result
       }
 
+      const endTime = performance.now()
+      console.log(`Command "${normalizedCommand}" processed in ${endTime - startTime} ms`)
       return {
         success: false,
         message:
           "I didn't understand that command. Try saying 'turn on the lights' or 'set temperature to 72 degrees'.",
       }
     } catch (error) {
-      console.error("Command processing error:", error)
+      const endTime = performance.now()
+      console.error(`Command "${normalizedCommand}" processing error after ${endTime - startTime} ms:`, error)
       return { success: false, message: "Sorry, I encountered an error processing that command." }
     }
   }

@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import Link from "next/link"
 
 export default function CallToAction() {
   const [ref, inView] = useInView({
@@ -27,7 +28,9 @@ export default function CallToAction() {
 
           <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
             <Input type="email" placeholder="Enter your email" className="flex-grow" />
-            <Button className="bg-blue-600 hover:bg-blue-700">Join Waitlist</Button>
+            <Link href="/dashboard" passHref>
+              <Button className="bg-blue-600 hover:bg-blue-700">Join Waitlist</Button>
+            </Link>
           </div>
 
           <p className="mt-4 text-sm text-slate-500">We respect your privacy. Your information will never be shared.</p>

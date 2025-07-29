@@ -47,7 +47,7 @@ export default function VoiceCommandCenter({
 
   const handleVoiceActivation = async () => {
     if (!speechRecognition) {
-      alert("Speech recognition not available on this device")
+      alert("❌ Speech recognition not available on this device")
       return
     }
 
@@ -102,15 +102,8 @@ export default function VoiceCommandCenter({
       console.error("Voice recognition error:", error)
       setPermissionStatus("denied")
 
-      // Show user-friendly error message
-      let errorMessage = "Voice recognition failed. "
-      if (error.message.includes("not-allowed") || error.message.includes("permission")) {
-        errorMessage += "Please allow microphone access and try again."
-      } else if (error.message.includes("no-speech")) {
-        errorMessage += "No speech detected. Please try speaking again."
-      } else {
-        errorMessage += "Please check your microphone and try again."
-      }
+      // Use the detailed error message from speech recognition
+      const errorMessage = error.message || "Voice recognition failed. Please try again."
 
       setConversationHistory((prev) => [
         {

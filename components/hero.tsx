@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { speechRecognition } from "@/lib/speech-recognition"
 import { voiceCommandProcessor } from "@/lib/connectivity"
+import MicrophonePermissionGuide from "@/components/microphone-permission-guide"
 
 export default function Hero() {
   const [isListening, setIsListening] = useState(false)
@@ -14,6 +15,7 @@ export default function Hero() {
   const [response, setResponse] = useState("")
   const [capabilities, setCapabilities] = useState<any>(null)
   const [permissionGranted, setPermissionGranted] = useState(false)
+  const [showPermissionGuide, setShowPermissionGuide] = useState(false)
 
   useEffect(() => {
     if (speechRecognition) {
@@ -21,9 +23,29 @@ export default function Hero() {
     }
   }, [])
 
+  useEffect(() => {
+    const checkInitialPermissions = async () => {
+      if (speechRecognition && navigator.permissions) {
+        try {
+          const permissionStatus = await navigator.permissions.query({ name: "microphone" as PermissionName })
+          setPermissionGranted(permissionStatus.state === "granted")
+
+          // Listen for permission changes
+          permissionStatus.onchange = () => {
+            setPermissionGranted(permissionStatus.state === "granted")
+          }
+        } catch (error) {
+          console.log("Could not check microphone permissions")
+        }
+      }
+    }
+
+    checkInitialPermissions()
+  }, [])
+
   const handleVoiceActivation = async () => {
     if (!speechRecognition) {
-      setResponse("Speech recognition not available on this device")
+      setResponse("❌ Speech recognition not available on this device")
       return
     }
 
@@ -66,15 +88,19 @@ export default function Hero() {
       console.error("Voice command error:", error)
       setCurrentCommand("")
 
-      if (error.message.includes("not-allowed") || error.message.includes("permission")) {
-        setResponse("🚫 Microphone access denied. Please allow microphone access and try again.")
-      } else if (error.message.includes("no-speech")) {
-        setResponse("🔇 No speech detected. Please try speaking again.")
-      } else {
-        setResponse("❌ Voice recognition failed. Please check your microphone.")
+      // Show permission guide for permission errors
+      if (
+        error.message.includes("permission") ||
+        error.message.includes("denied") ||
+        error.message.includes("not-allowed")
+      ) {
+        setShowPermissionGuide(true)
       }
 
-      setTimeout(() => setResponse(""), 4000)
+      // Use the error message from the speech recognition system
+      setResponse(error.message || "❌ Voice recognition failed. Please try again.")
+
+      setTimeout(() => setResponse(""), 6000)
     } finally {
       setIsListening(false)
     }
@@ -309,6 +335,13 @@ export default function Hero() {
             🔐 Microphone permission required for voice control
           </motion.div>
         )}
+
+        {/* Permission Guide Modal */}
+        <MicrophonePermissionGuide
+          isOpen={showPermissionGuide}
+          onClose={() => setShowPermissionGuide(false)}
+          isMobile={capabilities?.isMobile || false}
+        />
       </div>
 
       <motion.div

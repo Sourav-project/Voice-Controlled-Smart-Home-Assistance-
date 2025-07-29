@@ -46,7 +46,9 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <Button className="bg-blue-600 hover:bg-blue-700">Get Started</Button>
+            <Link href="/dashboard" passHref>
+              <Button className="bg-blue-600 hover:bg-blue-700">Get Started</Button>
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -82,9 +84,11 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <Button className="bg-blue-600 hover:bg-blue-700 w-full" onClick={() => setIsMenuOpen(false)}>
-              Get Started
-            </Button>
+            <Link href="/dashboard" passHref>
+              <Button className="bg-blue-600 hover:bg-blue-700 w-full" onClick={() => setIsMenuOpen(false)}>
+                Get Started
+              </Button>
+            </Link>
           </nav>
         </motion.div>
       )}

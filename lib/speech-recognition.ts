@@ -5,11 +5,21 @@ export class EnhancedSpeechRecognition {
   private isListening = false
   private isSupported = false
   private isMobile = false
+  private voices: SpeechSynthesisVoice[] = [] // Cache voices
 
   constructor() {
     this.detectDevice()
     this.initializeSpeechRecognition()
     this.initializeSpeechSynthesis()
+    if (typeof window !== "undefined") {
+      // Populate voices once, and update if voices change
+      this.voices = this.synthesis?.getVoices() || []
+      if (this.synthesis) {
+        this.synthesis.onvoiceschanged = () => {
+          this.voices = this.synthesis?.getVoices() || []
+        }
+      }
+    }
   }
 
   private detectDevice() {
@@ -66,19 +76,45 @@ export class EnhancedSpeechRecognition {
 
   async requestMicrophonePermission(): Promise<boolean> {
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Media devices not supported")
+      // Check if we're in a secure context (HTTPS or localhost)
+      if (typeof window !== "undefined" && !window.isSecureContext && window.location.hostname !== "localhost") {
+        console.warn("Microphone requires HTTPS or localhost")
+        return false
       }
 
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("getUserMedia not supported")
+        return false
+      }
+
+      // Check existing permissions first
+      if (navigator.permissions) {
+        try {
+          const permissionStatus = await navigator.permissions.query({ name: "microphone" as PermissionName })
+          if (permissionStatus.state === "granted") {
+            return true
+          }
+          if (permissionStatus.state === "denied") {
+            console.warn("Microphone permission previously denied")
+            return false
+          }
+        } catch (error) {
+          // Permissions API might not be fully supported, continue with getUserMedia
+          console.log("Permissions API not fully supported, trying getUserMedia")
+        }
+      }
+
+      // Request microphone access with minimal constraints
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          // Mobile-specific audio constraints
+          // Minimal constraints for better compatibility
           ...(this.isMobile && {
-            sampleRate: 16000,
-            channelCount: 1,
+            sampleRate: { ideal: 16000 },
+            channelCount: { ideal: 1 },
           }),
         },
       })
@@ -86,8 +122,20 @@ export class EnhancedSpeechRecognition {
       // Stop the stream immediately - we just needed permission
       stream.getTracks().forEach((track) => track.stop())
       return true
-    } catch (error) {
-      console.error("Microphone permission denied:", error)
+    } catch (error: any) {
+      console.error("Microphone permission error:", error)
+
+      // Handle different error types
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        console.warn("User denied microphone permission")
+      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        console.warn("No microphone found")
+      } else if (error.name === "NotSupportedError") {
+        console.warn("Microphone not supported")
+      } else if (error.name === "NotReadableError") {
+        console.warn("Microphone already in use")
+      }
+
       return false
     }
   }
@@ -95,7 +143,7 @@ export class EnhancedSpeechRecognition {
   async startListening(): Promise<{ transcript: string; confidence: number; isFinal: boolean }> {
     return new Promise(async (resolve, reject) => {
       if (!this.isSupported) {
-        reject(new Error("Speech recognition not supported"))
+        reject(new Error("Speech recognition not supported on this browser"))
         return
       }
 
@@ -104,11 +152,27 @@ export class EnhancedSpeechRecognition {
         return
       }
 
-      // Request microphone permission first
-      const hasPermission = await this.requestMicrophonePermission()
+      // Check microphone permission without requesting it first
+      let hasPermission = false
+      try {
+        if (navigator.permissions) {
+          const permissionStatus = await navigator.permissions.query({ name: "microphone" as PermissionName })
+          hasPermission = permissionStatus.state === "granted"
+        }
+      } catch (error) {
+        // Permissions API not supported, we'll try anyway
+        hasPermission = true
+      }
+
+      // Only request permission if we don't have it
       if (!hasPermission) {
-        reject(new Error("Microphone permission required"))
-        return
+        const permissionGranted = await this.requestMicrophonePermission()
+        if (!permissionGranted) {
+          reject(
+            new Error("Microphone permission is required. Please allow microphone access in your browser settings."),
+          )
+          return
+        }
       }
 
       this.isListening = true
@@ -135,7 +199,7 @@ export class EnhancedSpeechRecognition {
             })
           } else {
             interimTranscript += transcript
-            // For mobile, we might want to resolve interim results
+            // For mobile, resolve interim results if they're substantial
             if (this.isMobile && transcript.trim().length > 3) {
               resolve({
                 transcript: transcript.trim(),
@@ -151,22 +215,29 @@ export class EnhancedSpeechRecognition {
         this.isListening = false
         console.error("Speech recognition error:", event.error)
 
-        // Handle different error types
+        // Handle different error types with user-friendly messages
         switch (event.error) {
           case "not-allowed":
-            reject(new Error("Microphone access denied. Please allow microphone access and try again."))
+            reject(
+              new Error(
+                "🚫 Microphone access denied. Please click the microphone icon in your browser's address bar and allow access.",
+              ),
+            )
             break
           case "no-speech":
-            reject(new Error("No speech detected. Please try speaking again."))
+            reject(new Error("🔇 No speech detected. Please try speaking again."))
             break
           case "audio-capture":
-            reject(new Error("Audio capture failed. Please check your microphone."))
+            reject(new Error("🎤 Microphone not available. Please check your microphone connection."))
             break
           case "network":
-            reject(new Error("Network error. Please check your internet connection."))
+            reject(new Error("🌐 Network error. Please check your internet connection."))
+            break
+          case "service-not-allowed":
+            reject(new Error("🔒 Speech service not allowed. Please use HTTPS or localhost."))
             break
           default:
-            reject(new Error(`Speech recognition error: ${event.error}`))
+            reject(new Error(`❌ Speech recognition error: ${event.error}. Please try again.`))
         }
       }
 
@@ -184,14 +255,18 @@ export class EnhancedSpeechRecognition {
             if (this.isListening) {
               this.stopListening()
               if (!finalTranscript && !interimTranscript) {
-                reject(new Error("No speech detected within timeout period"))
+                reject(new Error("⏱️ No speech detected within 10 seconds. Please try again."))
               }
             }
           }, 10000) // 10 second timeout for mobile
         }
-      } catch (error) {
+      } catch (error: any) {
         this.isListening = false
-        reject(error)
+        if (error.name === "InvalidStateError") {
+          reject(new Error("🔄 Speech recognition is already running. Please wait and try again."))
+        } else {
+          reject(error)
+        }
       }
     })
   }
@@ -218,10 +293,9 @@ export class EnhancedSpeechRecognition {
       utterance.pitch = options.pitch || 1
       utterance.volume = options.volume || 0.8
 
-      // Mobile-specific voice selection
-      if (this.isMobile) {
-        const voices = this.synthesis.getVoices()
-        const preferredVoice = voices.find((voice) => voice.lang.startsWith("en") && voice.localService)
+      // Mobile-specific voice selection - use cached voices
+      if (this.isMobile && this.voices.length > 0) {
+        const preferredVoice = this.voices.find((voice) => voice.lang.startsWith("en") && voice.localService)
         if (preferredVoice) {
           utterance.voice = preferredVoice
         }
