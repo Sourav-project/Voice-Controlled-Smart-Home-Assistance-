@@ -1,26 +1,87 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Mic } from "lucide-react"
+import { Mic, MicOff, Smartphone, Monitor } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { speechRecognition } from "@/lib/speech-recognition"
+import { voiceCommandProcessor } from "@/lib/connectivity"
 
 export default function Hero() {
   const [isListening, setIsListening] = useState(false)
-  const [pulseAnimation, setPulseAnimation] = useState(false)
+  const [currentCommand, setCurrentCommand] = useState("")
+  const [response, setResponse] = useState("")
+  const [capabilities, setCapabilities] = useState<any>(null)
+  const [permissionGranted, setPermissionGranted] = useState(false)
 
   useEffect(() => {
-    if (isListening) {
-      const interval = setInterval(() => {
-        setPulseAnimation((prev) => !prev)
-      }, 2000)
-
-      return () => clearInterval(interval)
+    if (speechRecognition) {
+      setCapabilities(speechRecognition.getCapabilities())
     }
-  }, [isListening])
+  }, [])
+
+  const handleVoiceActivation = async () => {
+    if (!speechRecognition) {
+      setResponse("Speech recognition not available on this device")
+      return
+    }
+
+    if (isListening) {
+      speechRecognition.stopListening()
+      setIsListening(false)
+      setCurrentCommand("")
+      return
+    }
+
+    try {
+      setIsListening(true)
+      setCurrentCommand("🎤 Listening...")
+      setResponse("")
+
+      const result = await speechRecognition.startListening()
+      setPermissionGranted(true)
+      setCurrentCommand(result.transcript)
+
+      if (voiceCommandProcessor && result.transcript.trim()) {
+        const commandResponse = await voiceCommandProcessor.processCommand(result.transcript)
+        setResponse(commandResponse.message)
+
+        // Speak the response
+        if (commandResponse.success) {
+          try {
+            await speechRecognition.speak(commandResponse.message)
+          } catch (error) {
+            console.log("Text-to-speech failed:", error)
+          }
+        }
+      }
+
+      // Clear after 5 seconds
+      setTimeout(() => {
+        setCurrentCommand("")
+        setResponse("")
+      }, 5000)
+    } catch (error: any) {
+      console.error("Voice command error:", error)
+      setCurrentCommand("")
+
+      if (error.message.includes("not-allowed") || error.message.includes("permission")) {
+        setResponse("🚫 Microphone access denied. Please allow microphone access and try again.")
+      } else if (error.message.includes("no-speech")) {
+        setResponse("🔇 No speech detected. Please try speaking again.")
+      } else {
+        setResponse("❌ Voice recognition failed. Please check your microphone.")
+      }
+
+      setTimeout(() => setResponse(""), 4000)
+    } finally {
+      setIsListening(false)
+    }
+  }
 
   return (
-    <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }).map((_, i) => (
@@ -49,9 +110,58 @@ export default function Hero() {
         ))}
       </div>
 
-      <div className="z-10 text-center px-4 max-w-4xl">
+      <div className="z-10 text-center px-8 py-12 max-w-4xl rounded-2xl backdrop-blur-md bg-gradient-to-br from-white/5 to-blue-500/10 border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] relative overflow-hidden">
+        {/* Device compatibility indicator */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          {capabilities?.isMobile && (
+            <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-400">
+              <Smartphone className="h-3 w-3 mr-1" />
+              Mobile Ready
+            </Badge>
+          )}
+          {!capabilities?.isMobile && (
+            <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-400">
+              <Monitor className="h-3 w-3 mr-1" />
+              Desktop Ready
+            </Badge>
+          )}
+          {capabilities?.speechRecognition && (
+            <Badge variant="outline" className="bg-purple-500/20 text-purple-300 border-purple-400">
+              🎤 Voice Ready
+            </Badge>
+          )}
+        </div>
+
+        {/* Animated subtle background patterns */}
+        <div className="absolute inset-0 z-0 opacity-20">
+          <motion.div
+            className="absolute top-0 right-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl"
+            animate={{
+              x: [50, 0, 50],
+              y: [0, 50, 0],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Number.POSITIVE_INFINITY,
+              repeatType: "reverse",
+            }}
+          />
+          <motion.div
+            className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
+            animate={{
+              x: [0, 50, 0],
+              y: [50, 0, 50],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Number.POSITIVE_INFINITY,
+              repeatType: "reverse",
+            }}
+          />
+        </div>
+
         <motion.h1
-          className="text-5xl md:text-7xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-100 [text-shadow:_0_0_15px_rgba(255,255,255,0.5),_0_0_30px_rgba(59,130,246,0.5),_0_0_5px_#fff]"
+          className="text-5xl md:text-7xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-100 [text-shadow:_0_0_15px_rgba(255,255,255,0.5),_0_0_30px_rgba(59,130,246,0.5),_0_0_5px_#fff] relative z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -60,19 +170,19 @@ export default function Hero() {
         </motion.h1>
 
         <motion.p
-          className="text-xl md:text-2xl mb-12 text-slate-300"
+          className="text-xl md:text-2xl mb-8 text-slate-300 relative z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          One voice to control them all. Seamlessly integrate and manage all your smart home devices.
+          Real voice recognition for smartphones and computers. Control your smart home naturally.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="mb-12 relative"
+          className="mb-8 relative z-10"
         >
           {/* Siri-like colorful background effect */}
           {isListening && (
@@ -98,15 +208,25 @@ export default function Hero() {
 
           <Button
             size="lg"
-            className={`rounded-full h-24 w-24 p-0 relative z-10 ${
+            className={`rounded-full h-24 w-24 p-0 relative z-10 transition-all duration-300 ${
               isListening
-                ? "bg-black/20 backdrop-blur-md border-2 border-white/30"
-                : "bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30"
+                ? "bg-red-500/80 backdrop-blur-md border-2 border-white/30 shadow-lg shadow-red-500/50"
+                : capabilities?.speechRecognition
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50"
+                  : "bg-gray-500 cursor-not-allowed"
             }`}
-            onClick={() => setIsListening(!isListening)}
+            onClick={handleVoiceActivation}
+            disabled={!capabilities?.speechRecognition}
           >
             <div className="relative">
-              <Mic size={40} className={isListening ? "text-white animate-pulse" : "text-white"} />
+              {isListening ? (
+                <Mic size={40} className="text-white animate-pulse" />
+              ) : capabilities?.speechRecognition ? (
+                <Mic size={40} className="text-white" />
+              ) : (
+                <MicOff size={40} className="text-white" />
+              )}
+
               {isListening && (
                 <>
                   <motion.div
@@ -138,11 +258,57 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
+          className="relative z-10 space-y-3"
         >
-          <p className="text-lg text-slate-400">
-            {isListening ? "Listening... Try saying 'Turn on the lights'" : "Click the microphone to start"}
-          </p>
+          {currentCommand ? (
+            <div className="space-y-2">
+              <p className="text-lg text-blue-300 font-medium">"{currentCommand}"</p>
+              {response && (
+                <p
+                  className={`text-lg font-medium ${response.includes("❌") || response.includes("🚫") ? "text-red-300" : "text-green-300"}`}
+                >
+                  {response}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-lg text-slate-300">
+                {capabilities?.speechRecognition
+                  ? "🎤 Click the microphone to start voice control"
+                  : "Voice recognition not available on this device"}
+              </p>
+              {capabilities?.speechRecognition && (
+                <div className="text-sm text-slate-400 space-y-1">
+                  <p>Try saying:</p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Badge variant="outline" className="bg-white/10 text-slate-300 border-slate-500">
+                      "Turn on the lights"
+                    </Badge>
+                    <Badge variant="outline" className="bg-white/10 text-slate-300 border-slate-500">
+                      "Set temperature to 72"
+                    </Badge>
+                    <Badge variant="outline" className="bg-white/10 text-slate-300 border-slate-500">
+                      "Good night"
+                    </Badge>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
+
+        {/* Permission status */}
+        {capabilities?.speechRecognition && !permissionGranted && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mt-4 text-sm text-yellow-300"
+          >
+            🔐 Microphone permission required for voice control
+          </motion.div>
+        )}
       </div>
 
       <motion.div
@@ -163,4 +329,3 @@ export default function Hero() {
     </section>
   )
 }
-

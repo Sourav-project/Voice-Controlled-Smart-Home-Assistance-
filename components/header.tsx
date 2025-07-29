@@ -2,12 +2,21 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/features", label: "Features" },
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "#demo", label: "Demo" },
+  ]
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md text-white">
@@ -26,15 +35,17 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="#features" className="text-slate-300 hover:text-white transition-colors">
-              Features
-            </Link>
-            <Link href="#how-it-works" className="text-slate-300 hover:text-white transition-colors">
-              How It Works
-            </Link>
-            <Link href="#demo" className="text-slate-300 hover:text-white transition-colors">
-              Demo
-            </Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`transition-colors ${
+                  pathname === item.href ? "text-blue-400" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
             <Button className="bg-blue-600 hover:bg-blue-700">Get Started</Button>
           </nav>
 
@@ -59,27 +70,18 @@ export default function Header() {
           transition={{ duration: 0.3 }}
         >
           <nav className="container mx-auto px-4 flex flex-col space-y-4">
-            <Link
-              href="#features"
-              className="text-slate-300 hover:text-white transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Features
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="text-slate-300 hover:text-white transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              How It Works
-            </Link>
-            <Link
-              href="#demo"
-              className="text-slate-300 hover:text-white transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Demo
-            </Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`py-2 transition-colors ${
+                  pathname === item.href ? "text-blue-400" : "text-slate-300 hover:text-white"
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
             <Button className="bg-blue-600 hover:bg-blue-700 w-full" onClick={() => setIsMenuOpen(false)}>
               Get Started
             </Button>
@@ -89,4 +91,3 @@ export default function Header() {
     </header>
   )
 }
-

@@ -131,4 +131,3 @@ export async function getVoiceCommands(): Promise<VoiceCommand[]> {
     setTimeout(() => resolve(voiceCommands), 500)
   })
 }
-
