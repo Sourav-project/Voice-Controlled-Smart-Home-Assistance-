@@ -1,3 +1,6 @@
+import { generateText } from "ai" // [^6]
+import { openai } from "@ai-sdk/openai" // [^6]
+
 // Smart Home Device Connectivity Manager with real speech integration
 export class SmartHomeConnectivity {
   private devices: Map<string, any> = new Map()
@@ -284,17 +287,32 @@ export class VoiceCommandProcessor {
         return result
       }
 
+      // If no specific command is recognized, use AI to generate a conversational response
+      const aiResponse = await this.generateAIResponse(normalizedCommand) // [^6]
       const endTime = performance.now()
-      console.log(`Command "${normalizedCommand}" processed in ${endTime - startTime} ms`)
-      return {
-        success: false,
-        message:
-          "I didn't understand that command. Try saying 'turn on the lights' or 'set temperature to 72 degrees'.",
-      }
+      console.log(`Command "${normalizedCommand}" processed by AI in ${endTime - startTime} ms`)
+      return { success: true, message: aiResponse }
     } catch (error) {
       const endTime = performance.now()
       console.error(`Command "${normalizedCommand}" processing error after ${endTime - startTime} ms:`, error)
       return { success: false, message: "Sorry, I encountered an error processing that command." }
+    }
+  }
+
+  private async generateAIResponse(prompt: string): Promise<string> {
+    // [^6]
+    try {
+      const { text } = await generateText({
+        // [^6]
+        model: openai("gpt-4o"), // [^6]
+        prompt: `You are a helpful and friendly smart home assistant. Respond conversationally to the following user input. If it's not a direct command, try to engage or provide general information. User: "${prompt}"`, // [^6]
+        system:
+          "You are a smart home assistant. Your goal is to be helpful, friendly, and conversational. If a command is not recognized, try to respond in a way that keeps the conversation going or offers assistance.", // [^6]
+      })
+      return text // [^6]
+    } catch (error) {
+      console.error("Error generating AI response:", error) // [^6]
+      return "I'm sorry, I'm having trouble connecting to my AI brain right now. Please try again later." // [^6]
     }
   }
 
