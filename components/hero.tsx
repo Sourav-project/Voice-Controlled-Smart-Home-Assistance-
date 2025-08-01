@@ -110,7 +110,7 @@ export default function Hero() {
     <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        {Array.from({ length: 8 }).map((_, i) => (
+        {Array.from({ length: 12 }).map((_, i) => (
           <motion.div
             key={i}
             className="absolute rounded-full bg-blue-500/10"
@@ -136,7 +136,7 @@ export default function Hero() {
         ))}
       </div>
 
-      <div className="z-10 text-center px-8 py-12 max-w-4xl rounded-2xl bg-white/20 border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] relative overflow-hidden">
+      <div className="z-10 text-center px-8 py-12 w-full rounded-2xl bg-white/20 border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] relative overflow-hidden">
         {/* Device compatibility indicator */}
         <div className="absolute top-4 right-4 flex gap-2">
           {capabilities?.isMobile && (
@@ -188,18 +188,18 @@ export default function Hero() {
 
         <motion.h1
           className="text-5xl md:text-7xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-100 [text-shadow:_0_0_15px_rgba(255,255,255,0.5),_0_0_30px_rgba(59,130,246,0.5),_0_0_5px_#fff] relative z-10"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1.0, ease: "easeOut" }}
         >
           Voice-Controlled Smart Home Assistant
         </motion.h1>
 
         <motion.p
           className="text-xl md:text-2xl mb-8 text-slate-300 relative z-10"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 1.0, delay: 0.3, ease: "easeOut" }}
         >
           Real voice recognition for smartphones and computers. Control your smart home naturally.
         </motion.p>
@@ -213,10 +213,10 @@ export default function Hero() {
           {/* Siri-like colorful background effect */}
           {isListening && (
             <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70 blur-md"
               animate={{
-                scale: [1, 1.2, 1],
-                rotate: [0, 180],
+                scale: [1, 1.5, 1],
+                rotate: [0, 360],
                 background: [
                   "linear-gradient(90deg, rgba(59,130,246,0.7) 0%, rgba(147,51,234,0.7) 50%, rgba(236,72,153,0.7) 100%)",
                   "linear-gradient(180deg, rgba(6,182,212,0.7) 0%, rgba(59,130,246,0.7) 50%, rgba(147,51,234,0.7) 100%)",
@@ -225,7 +225,7 @@ export default function Hero() {
                 ],
               }}
               transition={{
-                duration: 8,
+                duration: 6,
                 repeat: Number.POSITIVE_INFINITY,
                 repeatType: "reverse",
               }}
@@ -258,21 +258,21 @@ export default function Hero() {
                   <motion.div
                     className="absolute inset-0 rounded-full border-2 border-white/70"
                     animate={{
-                      scale: [1, 1.5, 1],
+                      scale: [1, 1.8, 1],
                       opacity: [1, 0, 1],
                     }}
-                    transition={{ duration: 2, ease: "easeInOut", repeat: Number.POSITIVE_INFINITY }}
+                    transition={{ duration: 1.8, ease: "easeInOut", repeat: Number.POSITIVE_INFINITY }}
                   />
                   <motion.div
                     className="absolute -inset-3 rounded-full"
                     animate={{
                       boxShadow: [
                         "0 0 5px 2px rgba(255,255,255,0.3)",
-                        "0 0 15px 5px rgba(255,255,255,0.5)",
+                        "0 0 25px 8px rgba(255,255,255,0.6)",
                         "0 0 5px 2px rgba(255,255,255,0.3)",
                       ],
                     }}
-                    transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
+                    transition={{ duration: 1.2, repeat: Number.POSITIVE_INFINITY }}
                   />
                 </>
               )}

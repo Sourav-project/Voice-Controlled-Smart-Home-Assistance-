@@ -65,18 +65,11 @@ export default function HowItWorks() {
               animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.5, delay: index * 0.2 }}
             >
-              <div
-                className={`flex flex-col items-center md:items-${index % 2 === 0 ? "end" : "start"} md:w-1/2 md:${index % 2 === 0 ? "pr-12" : "pl-12"}`}
-              >
+              <div className={`flex flex-col items-center md:items-center md:pr-12 md:pl-12`}>
                 <div className={`${step.color} rounded-full p-4 mb-4 z-10`}>{step.icon}</div>
                 <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                <p className="text-slate-600 text-center md:text-${index % 2 === 0 ? 'right' : 'left'}">
-                  {step.description}
-                </p>
+                <p className="text-slate-600 text-center md:text-center">{step.description}</p>
               </div>
-
-              {/* Hidden on mobile, visible on md+ */}
-              <div className="hidden md:block md:w-1/2" />
             </motion.div>
           ))}
         </div>
